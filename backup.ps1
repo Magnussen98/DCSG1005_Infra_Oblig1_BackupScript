@@ -24,7 +24,10 @@ if ( ! (Test-Path $disk) ) {
         }   
 
     } else {
-        throw "Du har allerede kjørt en backup"
+        $backupVersion = $newBackup + '-V' + ( (Get-ChildItem D:\backupFolder\ | Select-Object -Property Name | Select-String -Pattern $todaysDate | Measure-Object -Line).Lines + 1)
+        Write-Output $backupVersion
+        New-Item -type Directory $backupVersion
+        Copy-Item C:\Users\Admin\Documents\* $backupVersion -Recurse
     }
     
 } else {
