@@ -21,8 +21,8 @@ if (-Not (Test-Path ($lastBackupWriteTime = $feedBackFolder + "lastWriteTime.txt
 
 $lastBackup = Get-Content $lastBackupWriteTime
 
-    # Check if a backup is needed
-if ( (-Not $lastBackup) -or ($lastWriteTime -lt $lastBackup) ){
+    # Check if a backup is needed       -> CHANGE TO -lt FOR TEST PURPOSE
+if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
 
         # Try to connect to the disk if not connected
     if ( -Not (Test-Path $disk) ) {
