@@ -6,22 +6,55 @@
 $disk = 'D:\'
 $backupPath = 'D:\backupFolder\'  
 $folder = 'C:\Users\Admin\Documents\'
-$lastWriteTime = ((Get-Item C:\Users\Admin\Documents\).LastWriteTime).ToString("dd/MM/yyyy/HH/mm")
+$lastWriteTime = ( (Get-ChildItem $folder).LastWriteTime | Sort-Object -Bottom 1).ToString("dd/MM/yyyy/HH/mm")
+$lastWriteTimeParent = ((Get-Item $folder).LastWriteTime).ToString("dd/MM/yyyy/HH/mm")
 
-
-if (-Not (Test-Path ($feedBackFolder = $folder + "backup\")) ){
-    New-Item -Type Directory $feedBackFolder
+# If a file/dir has been deleten in subfolder. Then the "lastWriteTime" needs to be added in an extra check
+if($lastWriteTime -lt $lastWriteTimeParent) {
+    $lastWriteTime = $lastWriteTimeParent
 }
 
-if (-Not (Test-Path ($lastBackupWriteTime = $feedBackFolder + "lastWriteTime.txt")) ){
-    New-Item -Path $feedBackFolder -Name "lastWriteTime.txt" -ItemType "file"
-    Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $true         # Configure the access to be read-only
+function Add-DirIfNoPath {
+    param (
+       [Parameter(Mandatory)]
+       [String] $FullPath,
+
+       [Parameter(Mandatory)]
+       [ValidateSet("Directory", "File")]
+       [String] $Type
+    )
+    
+    if ($Type -eq "Directory"){
+        if (-Not (Test-Path $FullPath) ){
+            New-Item -Type Directory $FullPath
+        }
+        
+    } else{ 
+        if (-Not (Test-Path $FullPath) ){
+            New-Item -Path $FullPath -ItemType "file"
+        }
+    }
 }
+
+
+#Call function to check path, and eventually create a dir
+$feedBackFolder = $folder + "backup\"
+Add-DirIfNoPath -FullPath $feedBackFolder -Type "Directory"
+
+#Call function to check path, and eventually create a fiel
+$lastBackupWriteTime = $feedBackFolder + "lastWriteTime.txt"
+Add-DirIfNoPath -FullPath $lastBackupWriteTime -Type "File"
+
+
+
+Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $true    # Configure the access to be read-only        
 
 $lastBackup = Get-Content $lastBackupWriteTime
 
     # Check if a backup is needed       -> CHANGE TO -lt for TEST PURPOSE
 if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
+
+    
 
         # Try to connect to the disk if not connected
     if ( -Not (Test-Path $disk) ) {
@@ -33,8 +66,6 @@ if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
         $backupSize = (Get-ChildItem $folder -Recurse | Measure-Object -Property Length -sum).Sum   
         $availableDisk = (Get-PSDrive -Name D).Free
 
-       
-        
             #Check if there is avaliable space on the disk. If not, delete the oldest backup
         while ($backupSize -gt $availableDisk){
             $oldBackup = Get-ChildItem D:\backupFolder\ | Sort-Object -Property LastWriteTime -Descending -bottom 1
@@ -42,31 +73,30 @@ if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
 
             $availableDisk = (Get-PSDrive -Name D).Free
         }
-            #Check if there is a parent backupfolder
-        if ( -Not (Test-Path $backupPath) ) {
-            New-Item -Type Directory $backupPath
-        } else {
+
+        Add-DirIfNoPath -FullPath $backupPath -Type "Directory"
 
 
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!       #Write error message her!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-        }
+        #    #Check if there is a parent backupfolder
+        #if ( -Not (Test-Path $backupPath) ) {
+        #    New-Item -Type Directory $backupPath
+        #}
 
         $backup = $backupPath + ( Get-Date -Format dd/MM/yyyy-HH-mm)
 
             #Check if there is a subfolder
         if (-Not (Test-Path $backup) ) {
             New-Item -Type Directory $backup
+        } else {
+            #Error i backuperror filen
         }
-        
+
+        Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $false    # Gives access for write-permission
         Copy-Item C:\Users\Admin\Documents\* $backup -Recurse
          #Saves the backup date and store the info in a file
         $lastBackup = (Get-Date).ToString("dd/MM/yyyy/HH/mm")
         
-        Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $false    # Gives access for write-permission
+        
         Write-Output $lastBackup | Out-File -FilePath $lastBackupWriteTime
         Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $true     # Limit the access back to read-only
 

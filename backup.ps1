@@ -1,5 +1,5 @@
 $todaysDate = Get-Date -Format dd/MM/yyyy-HH-mm
-$EliminationDate = (Get-Date).AddMinutes(-5)
+$EliminationDate = (Get-Date).Addmin(-5)
 $disk = 'D:\'
 $backupFolder = $disk + 'backupFolder\'
 $newBackup = $backupFolder + $todaysDate
