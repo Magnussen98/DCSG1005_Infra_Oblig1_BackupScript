@@ -1,6 +1,4 @@
 ## Til neste gang:
-#   - Endre access Permission på "lastWrite" filen
-#   - Sjekk om While løkka fungerer som den skal
 #   - Sjekke opp controlled folder access
 #   - Fikse opp i if/else systemet. Bruke funksjon?
 #   - Scheduled task
@@ -17,11 +15,12 @@ if (-Not (Test-Path ($feedBackFolder = $folder + "backup\")) ){
 
 if (-Not (Test-Path ($lastBackupWriteTime = $feedBackFolder + "lastWriteTime.txt")) ){
     New-Item -Path $feedBackFolder -Name "lastWriteTime.txt" -ItemType "file"
+    Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $true         # Configure the access to be read-only
 }
 
 $lastBackup = Get-Content $lastBackupWriteTime
 
-    # Check if a backup is needed       -> CHANGE TO -lt FOR TEST PURPOSE
+    # Check if a backup is needed       -> CHANGE TO -lt for TEST PURPOSE
 if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
 
         # Try to connect to the disk if not connected
@@ -33,11 +32,15 @@ if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
     if ( Test-Path $disk ) {
         $backupSize = (Get-ChildItem $folder -Recurse | Measure-Object -Property Length -sum).Sum   
         $availableDisk = (Get-PSDrive -Name D).Free
+
+       
         
             #Check if there is avaliable space on the disk. If not, delete the oldest backup
         while ($backupSize -gt $availableDisk){
-            $oldBackup = Get-ChildItem D:\backupFolder\ | Sort-Object -Property LastWriteTime -Bottom 1
+            $oldBackup = Get-ChildItem D:\backupFolder\ | Sort-Object -Property LastWriteTime -Descending -bottom 1
             Remove-Item $oldBackup -Recurse
+
+            $availableDisk = (Get-PSDrive -Name D).Free
         }
             #Check if there is a parent backupfolder
         if ( -Not (Test-Path $backupPath) ) {
@@ -61,8 +64,11 @@ if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
         
         Copy-Item C:\Users\Admin\Documents\* $backup -Recurse
          #Saves the backup date and store the info in a file
-        $lastBackup = (Get-Date).ToString("dd/MM/yyyy/HH/mm")             
+        $lastBackup = (Get-Date).ToString("dd/MM/yyyy/HH/mm")
+        
+        Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $false    # Gives access for write-permission
         Write-Output $lastBackup | Out-File -FilePath $lastBackupWriteTime
+        Set-ItemProperty $lastBackupWriteTime -Name IsReadOnly -Value $true     # Limit the access back to read-only
 
 
         # Was not able to connect to the disk
@@ -79,6 +85,3 @@ if ( (-Not $lastBackup) -or ($lastWriteTime -gt $lastBackup) ){
 
     }
 }
-
-
-
