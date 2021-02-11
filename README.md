@@ -13,7 +13,11 @@ implement these measures into a solid powershell script.
 
 ## Design / Solution
 
-Justify/explain your design
+I have a created a script, which enables multiple safety precautions for ransomware attacks. The different precautions I
+have chosen to include in my script is;
+1. [Controlled Folder Access](https://docs.microsoft.com/en-us/windows/security/threat-protection/microsoft-defender-atp/enable-controlled-folders)
+2. [Backup to external hardisk](https://www.computerweekly.com/feature/Top-five-ways-backup-can-protect-against-ransomware)
+3. [Encryption](https://cyberx.tech/does-encryption-prevent-ransomware/)  
 
 ## Discussion, incl security aspects
 
