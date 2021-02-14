@@ -1,8 +1,18 @@
-## Til neste gang:
-#   - Sjekk det Hjelmås sa om admin i forelesning
-#   - Scheduled task
-#   - Finn en måte å skrive error til fil dersom file eksisterer
+# I have implemented Schedueld Task with the following code:
+#   Creating a task action:
+#   $taskAction = New-ScheduledTaskAction `
+#        -Execute 'pwsh.exe' `
+#        -Argument '-File C:\Users\Admin\dcsg1005\portifolio1\backupV2.ps1'
 #
+#   Adding a trigger:
+#   $repeat = (New-TimeSpan -Minutes 30)
+#   $dt = ([DateTime]::Now)
+#   $duration = $dt.AddYears(100)
+#   $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionDuration $duration
+#
+#   Register task:
+#   Register-ScheduledTask -TaskName RansomwareProtection -Action $taskAction -Trigger $trigger
+
 
 $disk = 'D:\'
 $backupPath = 'D:\backupFolder\'
